@@ -57,6 +57,7 @@ export function TransactionFilters({
     currentFilters.accountId,
     currentFilters.creditCardId,
     currentFilters.tagId,
+    currentFilters.status,
   ].filter(Boolean).length
 
   const buildUrl = (filters: Record<string, string | undefined>) => {
@@ -133,6 +134,26 @@ export function TransactionFilters({
                     <SelectItem value="INCOME">Receitas</SelectItem>
                     <SelectItem value="EXPENSE">Despesas</SelectItem>
                     <SelectItem value="TRANSFER">Transferências</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status filter */}
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={currentFilters.status ?? "all"}
+                  onValueChange={(v) =>
+                    handleFilter("status", v === "all" ? undefined : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="paid">Pagos</SelectItem>
+                    <SelectItem value="pending">Pendentes</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -307,6 +328,17 @@ export function TransactionFilters({
               <button
                 className="ml-1"
                 onClick={() => handleFilter("tagId", undefined)}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {currentFilters.status && (
+            <Badge variant="secondary" className="text-xs">
+              {currentFilters.status === "paid" ? "Pagos" : "Pendentes"}
+              <button
+                className="ml-1"
+                onClick={() => handleFilter("status", undefined)}
               >
                 <X className="h-3 w-3" />
               </button>

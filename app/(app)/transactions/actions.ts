@@ -6,6 +6,7 @@ import {
   createTransactionSchema,
   updateTransactionSchema,
   deleteTransactionSchema,
+  togglePaidSchema,
 } from "@/lib/schemas/transaction.schema"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@/app/generated/prisma/client"
@@ -184,6 +185,30 @@ export const deleteTransactionAction = authActionClient
     revalidatePath("/transactions")
     revalidatePath("/accounts")
     revalidatePath("/cards")
+    revalidatePath("/dashboard")
+    return { success: true }
+  })
+
+// ─── Toggle Paid ────────────────────────────────────────
+export const togglePaidAction = authActionClient
+  .schema(togglePaidSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id, isPaid } = parsedInput
+
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId: ctx.userId },
+    })
+    if (!existing) throw new Error("Transação não encontrada")
+
+    await prisma.transaction.update({
+      where: { id },
+      data: {
+        isPaid,
+        paidAt: isPaid ? new Date() : null,
+      },
+    })
+
+    revalidatePath("/transactions")
     revalidatePath("/dashboard")
     return { success: true }
   })

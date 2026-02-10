@@ -1,11 +1,15 @@
 "use client"
 
+import { useState, useTransition } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TransactionActions } from "./transaction-actions"
+import { togglePaidAction } from "../actions"
+import { toast } from "sonner"
+import { Check } from "lucide-react"
 
 interface TransactionItem {
   id: string
@@ -14,6 +18,7 @@ interface TransactionItem {
   amount: string | number | { toString(): string }
   date: string | Date
   notes: string | null
+  isPaid: boolean
   categoryId: string
   accountId: string | null
   creditCardId: string | null
@@ -71,16 +76,48 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
 function TransactionCard({ transaction: tx }: { transaction: TransactionItem }) {
   const amount = Number(tx.amount)
+  const [isPending, startTransition] = useTransition()
+  const [optimisticPaid, setOptimisticPaid] = useState(tx.isPaid)
+
+  const handleTogglePaid = () => {
+    const newValue = !optimisticPaid
+    setOptimisticPaid(newValue)
+    startTransition(async () => {
+      const result = await togglePaidAction({ id: tx.id, isPaid: newValue })
+      if (!result?.data?.success) {
+        setOptimisticPaid(!newValue)
+        toast.error("Erro ao atualizar status")
+      }
+    })
+  }
 
   return (
-    <Card>
+    <Card className={cn(optimisticPaid && "opacity-60")}>
       <CardContent className="flex items-center gap-3 py-3">
-        <div
-          className="h-3 w-3 shrink-0 rounded-full"
-          style={{ backgroundColor: tx.category.color ?? "#6b7280" }}
-        />
+        <button
+          type="button"
+          onClick={handleTogglePaid}
+          disabled={isPending}
+          className={cn(
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+            optimisticPaid
+              ? "border-emerald-500 bg-emerald-500 text-white"
+              : "border-muted-foreground/30 hover:border-muted-foreground/60"
+          )}
+          aria-label={optimisticPaid ? "Marcar como pendente" : "Marcar como pago"}
+        >
+          {optimisticPaid && <Check className="h-3 w-3" />}
+        </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{tx.description}</p>
+          <div className="flex items-center gap-1.5">
+            <div
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: tx.category.color ?? "#6b7280" }}
+            />
+            <p className={cn("text-sm font-medium truncate", optimisticPaid && "line-through text-muted-foreground")}>
+              {tx.description}
+            </p>
+          </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-xs text-muted-foreground">
               {tx.category.name}

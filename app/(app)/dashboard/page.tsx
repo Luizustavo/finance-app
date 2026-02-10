@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db/prisma"
 import { redirect } from "next/navigation"
 import { startOfMonth, endOfMonth } from "date-fns"
 import { DashboardHeader } from "./_components/dashboard-header"
-import { BalanceSummary } from "./_components/balance-summary"
+import { CashFlowSummary } from "./_components/cash-flow-summary"
 import { RecentTransactions } from "./_components/recent-transactions"
 import { AccountBalances } from "./_components/account-balances"
 
@@ -22,13 +22,13 @@ export default async function DashboardPage() {
   const monthEnd = endOfMonth(now)
 
   const [transactions, accounts, recentTransactions] = await Promise.all([
-    // Current month transactions for totals
+    // Current month transactions with isPaid
     prisma.transaction.findMany({
       where: {
         userId,
         date: { gte: monthStart, lte: monthEnd },
       },
-      select: { type: true, amount: true },
+      select: { type: true, amount: true, isPaid: true },
     }),
     // All active accounts with their transaction totals
     prisma.account.findMany({
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
         name: true,
         type: true,
         transactions: {
-          select: { type: true, amount: true },
+          select: { type: true, amount: true, isPaid: true },
         },
       },
     }),
@@ -56,27 +56,30 @@ export default async function DashboardPage() {
     }),
   ])
 
-  // Calculate month totals
+  // Calculate month totals (planned vs actual)
   const totals = transactions.reduce(
     (acc, tx) => {
       const amount = Number(tx.amount)
-      if (tx.type === "INCOME") acc.income += amount
-      else if (tx.type === "EXPENSE") acc.expense += amount
+      if (tx.type === "INCOME") {
+        acc.totalIncome += amount
+        if (tx.isPaid) acc.receivedIncome += amount
+      } else if (tx.type === "EXPENSE") {
+        acc.totalExpense += amount
+        if (tx.isPaid) acc.paidExpense += amount
+      }
       return acc
     },
-    { income: 0, expense: 0 }
+    { totalIncome: 0, totalExpense: 0, receivedIncome: 0, paidExpense: 0 }
   )
 
-  // Calculate account balances
+  // Calculate account balances (only PAID transactions count for real balance)
   const accountBalances = accounts.map((account) => {
     const balance = account.transactions.reduce((sum, tx) => {
+      if (!tx.isPaid) return sum
       const amount = Number(tx.amount)
       if (tx.type === "INCOME") return sum + amount
       if (tx.type === "EXPENSE") return sum - amount
-      if (tx.type === "TRANSFER") {
-        // Outgoing transfers are EXPENSE-like for the source account
-        return sum - amount
-      }
+      if (tx.type === "TRANSFER") return sum - amount
       return sum
     }, 0)
 
@@ -103,10 +106,12 @@ export default async function DashboardPage() {
     <div className="px-4 py-6">
       <DashboardHeader userName={session.user.name ?? "Usuário"} />
 
-      <BalanceSummary
+      <CashFlowSummary
         totalBalance={totalBalance}
-        income={totals.income}
-        expense={totals.expense}
+        totalIncome={totals.totalIncome}
+        receivedIncome={totals.receivedIncome}
+        totalExpense={totals.totalExpense}
+        paidExpense={totals.paidExpense}
       />
 
       <AccountBalances accounts={accountBalances} />

@@ -22,6 +22,7 @@ interface TransactionsPageProps {
     accountId?: string
     creditCardId?: string
     tagId?: string
+    status?: string
     q?: string
   }>
 }
@@ -63,6 +64,8 @@ export default async function TransactionsPage({
   if (params.tagId) {
     where.tags = { some: { tagId: params.tagId } }
   }
+  if (params.status === "paid") where.isPaid = true
+  if (params.status === "pending") where.isPaid = false
 
   const [transactions, accounts, creditCards, categories, tags] =
     await Promise.all([
@@ -100,17 +103,24 @@ export default async function TransactionsPage({
       }),
     ])
 
-  // Calculate totals
+  // Calculate totals (planned vs actual)
   const totals = transactions.reduce(
     (acc, tx) => {
       const amount = Number(tx.amount)
-      if (tx.type === "INCOME") acc.income += amount
-      else if (tx.type === "EXPENSE") acc.expense += amount
+      if (tx.type === "INCOME") {
+        acc.totalIncome += amount
+        if (tx.isPaid) acc.receivedIncome += amount
+      } else if (tx.type === "EXPENSE") {
+        acc.totalExpense += amount
+        if (tx.isPaid) acc.paidExpense += amount
+      }
       return acc
     },
-    { income: 0, expense: 0 }
+    { totalIncome: 0, totalExpense: 0, receivedIncome: 0, paidExpense: 0 }
   )
-  const balance = totals.income - totals.expense
+  const projectedBalance = totals.totalIncome - totals.totalExpense
+  const pendingExpense = totals.totalExpense - totals.paidExpense
+  const pendingIncome = totals.totalIncome - totals.receivedIncome
 
   const monthLabel = format(dateRef, "MMMM yyyy", { locale: ptBR })
 
@@ -135,7 +145,7 @@ export default async function TransactionsPage({
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
-            }).format(totals.income)}
+            }).format(totals.totalIncome)}
           </p>
         </div>
         <div className="rounded-lg border p-3 text-center">
@@ -144,18 +154,38 @@ export default async function TransactionsPage({
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
-            }).format(totals.expense)}
+            }).format(totals.totalExpense)}
           </p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-xs text-muted-foreground">Saldo</p>
+          <p className="text-xs text-muted-foreground">Saldo Prev.</p>
           <p
-            className={`text-sm font-semibold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}
+            className={`text-sm font-semibold ${projectedBalance >= 0 ? "text-green-600" : "text-red-600"}`}
           >
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
-            }).format(balance)}
+            }).format(projectedBalance)}
+          </p>
+        </div>
+      </div>
+
+      {/* Paid / Pending summary */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950 p-2.5 text-center">
+          <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">Recebido / Pago</p>
+          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.receivedIncome)}
+            {" / "}
+            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totals.paidExpense)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-2.5 text-center">
+          <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400">A receber / A pagar</p>
+          <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pendingIncome)}
+            {" / "}
+            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pendingExpense)}
           </p>
         </div>
       </div>

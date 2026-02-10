@@ -77,3 +77,11 @@ export const deleteTransactionSchema = z.object({
 })
 
 export type DeleteTransactionInput = z.infer<typeof deleteTransactionSchema>
+
+// ─── Toggle Paid ────────────────────────────────────────
+export const togglePaidSchema = z.object({
+  id: z.string().cuid(),
+  isPaid: z.boolean(),
+})
+
+export type TogglePaidInput = z.infer<typeof togglePaidSchema>
