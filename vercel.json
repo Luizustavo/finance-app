@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-recurrences",
+      "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/check-budgets",
+      "schedule": "0 23 * * *"
+    }
+  ]
+}

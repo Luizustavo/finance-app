@@ -1,0 +1,384 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum AccountType {
+  CHECKING
+  INVESTMENT
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum Frequency {
+  MONTHLY
+  YEARLY
+}
+
+enum AlertType {
+  BUDGET_WARNING
+  BUDGET_EXCEEDED
+  GOAL_MILESTONE
+}
+
+enum AlertChannel {
+  WHATSAPP
+  IN_APP
+}
+
+enum FileFormat {
+  CSV
+  OFX
+  PDF
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  phoneWhatsapp String?  @map("phone_whatsapp")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  accounts         Account[]
+  creditCards      CreditCard[]
+  categories       Category[]
+  tags             Tag[]
+  transactions     Transaction[]
+  recurrences      Recurrence[]
+  installmentPlans InstallmentPlan[]
+  monthlyBalances  MonthlyBalance[]
+  budgets          Budget[]
+  investments      Investment[]
+  savingsGoals     SavingsGoal[]
+  alertConfigs     AlertConfig[]
+  alertLogs        AlertLog[]
+
+  @@map("users")
+}
+
+model Account {
+  id             String      @id @default(cuid())
+  userId         String      @map("user_id")
+  name           String
+  type           AccountType
+  initialBalance Decimal     @default(0) @map("initial_balance") @db.Decimal(12, 2)
+  isActive       Boolean     @default(true) @map("is_active")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  recurrences  Recurrence[]
+  investments  Investment[]
+
+  @@map("accounts")
+}
+
+model CreditCard {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String
+  creditLimit Decimal? @map("credit_limit") @db.Decimal(12, 2)
+  closingDay  Int      @map("closing_day")
+  dueDay      Int      @map("due_day")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  invoices         CreditCardInvoice[]
+  recurrences      Recurrence[]
+  installmentPlans InstallmentPlan[]
+
+  @@map("credit_cards")
+}
+
+model Category {
+  id        String       @id @default(cuid())
+  userId    String       @map("user_id")
+  parentId  String?      @map("parent_id")
+  name      String
+  type      CategoryType
+  icon      String?
+  color     String?
+  isActive  Boolean      @default(true) @map("is_active")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent           Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children         Category[]        @relation("CategoryHierarchy")
+  transactions     Transaction[]
+  recurrences      Recurrence[]
+  installmentPlans InstallmentPlan[]
+  budgets          Budget[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions TransactionTag[]
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+model Transaction {
+  id                String          @id @default(cuid())
+  userId            String          @map("user_id")
+  accountId         String?         @map("account_id")
+  creditCardId      String?         @map("credit_card_id")
+  invoiceId         String?         @map("invoice_id")
+  categoryId        String          @map("category_id")
+  installmentPlanId String?         @map("installment_plan_id")
+  recurrenceId      String?         @map("recurrence_id")
+  type              TransactionType
+  description       String
+  amount            Decimal         @db.Decimal(12, 2)
+  date              DateTime        @db.Date
+  installmentNumber Int?            @map("installment_number")
+  notes             String?
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         Account?           @relation(fields: [accountId], references: [id])
+  creditCard      CreditCard?        @relation(fields: [creditCardId], references: [id])
+  invoice         CreditCardInvoice? @relation(fields: [invoiceId], references: [id])
+  category        Category           @relation(fields: [categoryId], references: [id])
+  installmentPlan InstallmentPlan?   @relation(fields: [installmentPlanId], references: [id])
+  recurrence      Recurrence?        @relation(fields: [recurrenceId], references: [id])
+  tags            TransactionTag[]
+
+  @@index([userId, date])
+  @@index([userId, categoryId, date])
+  @@index([accountId, date])
+  @@index([creditCardId, invoiceId])
+  @@index([installmentPlanId])
+  @@map("transactions")
+}
+
+model TransactionTag {
+  transactionId String @map("transaction_id")
+  tagId         String @map("tag_id")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+  @@map("transaction_tags")
+}
+
+model Recurrence {
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  categoryId   String          @map("category_id")
+  accountId    String?         @map("account_id")
+  creditCardId String?         @map("credit_card_id")
+  description  String
+  type         TransactionType
+  amount       Decimal         @db.Decimal(12, 2)
+  frequency    Frequency
+  dayOfMonth   Int             @map("day_of_month")
+  startDate    DateTime        @map("start_date") @db.Date
+  endDate      DateTime?       @map("end_date") @db.Date
+  isActive     Boolean         @default(true) @map("is_active")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     Category      @relation(fields: [categoryId], references: [id])
+  account      Account?      @relation(fields: [accountId], references: [id])
+  creditCard   CreditCard?   @relation(fields: [creditCardId], references: [id])
+  transactions Transaction[]
+
+  @@index([userId, isActive])
+  @@map("recurrences")
+}
+
+model InstallmentPlan {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  creditCardId      String?  @map("credit_card_id")
+  categoryId        String   @map("category_id")
+  description       String
+  totalAmount       Decimal  @map("total_amount") @db.Decimal(12, 2)
+  totalInstallments Int      @map("total_installments")
+  installmentAmount Decimal  @map("installment_amount") @db.Decimal(12, 2)
+  startDate         DateTime @map("start_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCard   CreditCard?   @relation(fields: [creditCardId], references: [id])
+  category     Category      @relation(fields: [categoryId], references: [id])
+  transactions Transaction[]
+
+  @@map("installment_plans")
+}
+
+model MonthlyBalance {
+  id                  String  @id @default(cuid())
+  userId              String  @map("user_id")
+  year                Int
+  month               Int
+  previousBalance     Decimal @map("previous_balance") @db.Decimal(12, 2)
+  totalIncome         Decimal @map("total_income") @db.Decimal(12, 2)
+  totalExpenses       Decimal @map("total_expenses") @db.Decimal(12, 2)
+  monthlyDelta        Decimal @map("monthly_delta") @db.Decimal(12, 2)
+  carryForwardBalance Decimal @map("carry_forward_balance") @db.Decimal(12, 2)
+  isClosed            Boolean @default(false) @map("is_closed")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@map("monthly_balances")
+}
+
+model Budget {
+  id                    String   @id @default(cuid())
+  userId                String   @map("user_id")
+  categoryId            String   @map("category_id")
+  year                  Int
+  month                 Int
+  limitAmount           Decimal  @map("limit_amount") @db.Decimal(12, 2)
+  alertThresholdPercent Int      @default(80) @map("alert_threshold_percent")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, year, month])
+  @@map("budgets")
+}
+
+model CreditCardInvoice {
+  id           String    @id @default(cuid())
+  creditCardId String    @map("credit_card_id")
+  year         Int
+  month        Int
+  totalAmount  Decimal   @map("total_amount") @db.Decimal(12, 2)
+  dueDate      DateTime  @map("due_date") @db.Date
+  isPaid       Boolean   @default(false) @map("is_paid")
+  paymentDate  DateTime? @map("payment_date") @db.Date
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  creditCard   CreditCard      @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  imports      InvoiceImport[]
+
+  @@unique([creditCardId, year, month])
+  @@map("credit_card_invoices")
+}
+
+model InvoiceImport {
+  id            String     @id @default(cuid())
+  invoiceId     String     @map("invoice_id")
+  fileName      String     @map("file_name")
+  fileFormat    FileFormat @map("file_format")
+  itemsImported Int        @map("items_imported")
+  importedAt    DateTime   @default(now()) @map("imported_at")
+
+  invoice CreditCardInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_imports")
+}
+
+model Investment {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  accountId      String?  @map("account_id")
+  assetType      String   @map("asset_type")
+  description    String?
+  amountInvested Decimal  @map("amount_invested") @db.Decimal(12, 2)
+  quantity       Decimal? @db.Decimal(18, 8)
+  date           DateTime @db.Date
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id])
+
+  @@map("investments")
+}
+
+model SavingsGoal {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  name          String
+  description   String?
+  targetAmount  Decimal   @map("target_amount") @db.Decimal(12, 2)
+  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(12, 2)
+  deadline      DateTime? @db.Date
+  isAchieved    Boolean   @default(false) @map("is_achieved")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("savings_goals")
+}
+
+model AlertConfig {
+  id               String       @id @default(cuid())
+  userId           String       @map("user_id")
+  type             AlertType
+  channel          AlertChannel
+  thresholdPercent Int          @map("threshold_percent")
+  isActive         Boolean      @default(true) @map("is_active")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs AlertLog[]
+
+  @@map("alert_configs")
+}
+
+model AlertLog {
+  id            String   @id @default(cuid())
+  alertConfigId String   @map("alert_config_id")
+  userId        String   @map("user_id")
+  message       String
+  isRead        Boolean  @default(false) @map("is_read")
+  sentAt        DateTime @default(now()) @map("sent_at")
+
+  alertConfig AlertConfig @relation(fields: [alertConfigId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("alert_logs")
+}
