@@ -141,7 +141,7 @@ export default async function TransactionsPage({
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-lg border p-3 text-center">
           <p className="text-xs text-muted-foreground">Receitas</p>
-          <p className="text-sm font-semibold text-green-600">
+          <p className="text-sm font-semibold text-green-500">
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -150,7 +150,7 @@ export default async function TransactionsPage({
         </div>
         <div className="rounded-lg border p-3 text-center">
           <p className="text-xs text-muted-foreground">Despesas</p>
-          <p className="text-sm font-semibold text-red-600">
+          <p className="text-sm font-semibold text-red-500">
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -160,7 +160,7 @@ export default async function TransactionsPage({
         <div className="rounded-lg border p-3 text-center">
           <p className="text-xs text-muted-foreground">Saldo Prev.</p>
           <p
-            className={`text-sm font-semibold ${projectedBalance >= 0 ? "text-green-600" : "text-red-600"}`}
+            className={`text-sm font-semibold ${projectedBalance >= 0 ? "text-green-500" : "text-red-500"}`}
           >
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",

@@ -67,7 +67,7 @@ export function AccountBalances({ accounts }: AccountBalancesProps) {
                   <span className="text-sm font-medium">{account.name}</span>
                 </div>
                 <span
-                  className={`text-sm font-semibold ${account.balance >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                  className={`text-sm font-semibold ${account.balance >= 0 ? "text-emerald-500" : "text-red-500"}`}
                 >
                   {formatCurrency(account.balance)}
                 </span>

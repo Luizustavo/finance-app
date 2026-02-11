@@ -52,7 +52,7 @@ export function CashFlowSummary({
             <p
               className={cn(
                 "mt-1 text-lg font-bold",
-                projectedBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                projectedBalance >= 0 ? "text-emerald-500" : "text-red-500"
               )}
             >
               {formatCurrency(projectedBalance)}
@@ -74,7 +74,7 @@ export function CashFlowSummary({
             <p
               className={cn(
                 "mt-1 text-lg font-bold",
-                actualBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                actualBalance >= 0 ? "text-emerald-500" : "text-red-500"
               )}
             >
               {formatCurrency(actualBalance)}
@@ -105,7 +105,7 @@ export function CashFlowSummary({
               <ArrowUpCircle className="h-4 w-4 text-emerald-500" />
               <p className="text-sm font-medium">Receitas</p>
             </div>
-            <p className="text-sm font-semibold text-emerald-600">
+            <p className="text-sm font-semibold text-emerald-500">
               {formatCurrency(totalIncome)}
             </p>
           </div>
@@ -119,7 +119,7 @@ export function CashFlowSummary({
           </div>
 
           <div className="mt-1.5 flex justify-between text-[10px]">
-            <span className="text-emerald-600">
+            <span className="text-emerald-500">
               Recebido: {formatCurrency(receivedIncome)}
             </span>
             <span className="text-muted-foreground">
@@ -137,7 +137,7 @@ export function CashFlowSummary({
               <ArrowDownCircle className="h-4 w-4 text-red-500" />
               <p className="text-sm font-medium">Despesas</p>
             </div>
-            <p className="text-sm font-semibold text-red-600">
+            <p className="text-sm font-semibold text-red-500">
               {formatCurrency(totalExpense)}
             </p>
           </div>
@@ -151,7 +151,7 @@ export function CashFlowSummary({
           </div>
 
           <div className="mt-1.5 flex justify-between text-[10px]">
-            <span className="text-red-600">
+            <span className="text-red-500">
               Pago: {formatCurrency(paidExpense)}
             </span>
             <span className="text-muted-foreground">

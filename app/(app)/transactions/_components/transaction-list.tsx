@@ -156,9 +156,9 @@ function TransactionCard({ transaction: tx }: { transaction: TransactionItem }) 
           <p
             className={cn(
               "text-sm font-semibold",
-              tx.type === "INCOME" && "text-green-600",
-              tx.type === "EXPENSE" && "text-red-600",
-              tx.type === "TRANSFER" && "text-blue-600"
+              tx.type === "INCOME" && "text-green-500",
+              tx.type === "EXPENSE" && "text-red-500",
+              tx.type === "TRANSFER" && "text-blue-500"
             )}
           >
             {tx.type === "INCOME" ? "+" : tx.type === "EXPENSE" ? "-" : ""}

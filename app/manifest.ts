@@ -2,8 +2,8 @@ import { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Finance App",
-    short_name: "Finance",
+    name: "Finx Control",
+    short_name: "Finx",
     description: "Controle financeiro pessoal",
     start_url: "/dashboard",
     display: "standalone",

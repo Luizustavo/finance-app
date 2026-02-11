@@ -8,7 +8,6 @@ import { ArrowLeft, Loader2, Mail } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { forgotPasswordSchema, type ForgotPasswordInput } from "@/lib/schemas/auth.schema"
@@ -46,69 +45,90 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <Card>
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Mail className="h-6 w-6 text-primary-foreground" />
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#62ABD9] shadow-md">
+            <Mail className="h-6 w-6 text-white" />
           </div>
-          <CardTitle className="text-2xl">E-mail enviado</CardTitle>
-          <CardDescription>
+          <h1 className="text-2xl font-bold text-white">E-mail enviado</h1>
+          <p className="mt-1 text-sm text-[#A7D5F2]">
             Se o e-mail informado estiver cadastrado, enviaremos um link para
             redefinir sua senha.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter>
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-white/15 bg-white/10 p-8 shadow-xl backdrop-blur-md">
           <Link href="/login" className="w-full">
-            <Button variant="outline" className="w-full">
+            <Button
+              variant="outline"
+              className="w-full border-white/20 text-white hover:bg-white/10"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar para login
             </Button>
           </Link>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Recuperar senha</CardTitle>
-        <CardDescription>
+    <div className="space-y-6">
+      {/* Branding */}
+      <div className="flex flex-col items-center text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/system/favicon.png"
+          alt="Finx Control"
+          className="mb-3 h-16 w-16 drop-shadow-lg"
+        />
+        <h1 className="text-2xl font-bold tracking-wide text-white">FINX CONTROL</h1>
+        <p className="mt-1 text-sm text-[#A7D5F2]">
           Informe seu e-mail para receber um link de redefinição
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+      {/* Card */}
+      <div className="rounded-2xl border border-white/15 bg-white/10 p-8 shadow-xl backdrop-blur-md">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email" className="text-sm font-medium text-[#C2E5F2]">
+              E-mail
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="seu@email.com"
               autoComplete="email"
+              className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus-visible:border-[#62ABD9] focus-visible:ring-[#62ABD9]/20"
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-sm text-red-400">{errors.email.message}</p>
             )}
           </div>
-        </CardContent>
 
-        <CardFooter className="flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#62ABD9] font-semibold text-white shadow-md transition-colors hover:bg-[#5299c4]"
+            disabled={loading}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Enviar link
           </Button>
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="mr-1 inline h-3 w-3" />
-            Voltar para login
-          </Link>
-        </CardFooter>
-      </form>
-    </Card>
+        </form>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center">
+        <Link
+          href="/login"
+          className="inline-flex items-center text-sm text-[#A7D5F2] transition-colors hover:text-white"
+        >
+          <ArrowLeft className="mr-1 h-3 w-3" />
+          Voltar para login
+        </Link>
+      </div>
+    </div>
   )
 }

@@ -77,10 +77,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                 <p
                   className={`text-sm font-semibold whitespace-nowrap ${
                     tx.type === "INCOME"
-                      ? "text-emerald-600"
+                      ? "text-emerald-500"
                       : tx.type === "EXPENSE"
-                        ? "text-red-600"
-                        : "text-blue-600"
+                        ? "text-red-500"
+                        : "text-blue-500"
                   }`}
                 >
                   {tx.type === "INCOME" ? "+" : tx.type === "EXPENSE" ? "-" : ""}

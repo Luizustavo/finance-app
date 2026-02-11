@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Finance App",
-    template: "%s | Finance App",
+    default: "Finx Control",
+    template: "%s | Finx Control",
   },
   description: "Controle financeiro pessoal",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Finance",
+    title: "Finx Control",
   },
 }
 
@@ -31,7 +31,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#09090b",
+  themeColor: "#405259",
 }
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
